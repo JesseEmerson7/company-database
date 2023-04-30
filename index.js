@@ -2,7 +2,6 @@ const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
 
-
 const db = mysql.createConnection(
   {
     host: "localhost",
@@ -36,48 +35,62 @@ const start = () => {
     });
 };
 
-const sorter = (request) =>{
+const sorter = (request) => {
   switch (request) {
     case "View all departments":
-      
       break;
 
-      case "View all roles":
+    case "View all roles":
       viewAllRoles();
       break;
 
-      case "View all employees":
-      
+    case "View all employees":
+      viewAllEmployees();
+
       break;
 
-      case "View all employees":
-      
+    case "View all employees":
       break;
-  
+
     default:
       break;
   }
+};
 
-}
-
-const viewAllRoles = () =>{
-  db.query(`select t.id, t.title, ti.name as department, t.salary
+const viewAllRoles = () => {
+  db.query(
+    `select t.id, t.title, ti.name as department, t.salary
   from roles as t
   join departments as ti 
-  on t.department_id = ti.id;`,(err,rows)=>{
-    console.log(cTable.getTable(rows));
-    start();
-    if (err){
-      console.log(err)
+  on t.department_id = ti.id;`,
+    (err, rows) => {
+      console.log(cTable.getTable(rows));
+      start();
+      if (err) {
+        console.log(err);
+      }
     }
+  );
+};
+const viewAllEmployees = () => {
+  db.query(
+    `select t.id, t.first_name, t.last_name,tii.title, ti.name as department, tii.salary,
+  tiii.first_name as manager
+  from employees as t
+  join roles as tii on  t.role_id = tii.id
+  join departments as ti on tii.department_id = ti.id
+  left join employees as tiii on t.id = tiii.manager_id;`,
+    (err, rows) => {
+      console.log(cTable.getTable(rows));
+      start();
+      if (err) {
+        console.log(err);
+      }
+    }
+  );
+};
+const addToData = () => {};
 
-  })
-}
-
-const addToData = () =>{};
-
-const updateData = () =>{}; 
+const updateData = () => {};
 
 start();
-
-
