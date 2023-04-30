@@ -38,6 +38,7 @@ const start = () => {
 const sorter = (request) => {
   switch (request) {
     case "View all departments":
+      viewAllDepartments();
       break;
 
     case "View all roles":
@@ -88,6 +89,16 @@ const viewAllEmployees = () => {
       }
     }
   );
+};
+
+const viewAllDepartments = () => {
+  db.query(`SELECT * from departments;`, (err, rows) => {
+    console.log(cTable.getTable(rows));
+    start();
+    if (err) {
+      console.log(err);
+    }
+  });
 };
 const addToData = () => {};
 
