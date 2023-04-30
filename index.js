@@ -50,7 +50,18 @@ const sorter = (request) => {
 
       break;
 
-    case "View all employees":
+    case "Add a department":
+      addADepartment();
+      break;
+
+    case "Add a role":
+      break;
+
+    case "Add an employee":
+      addEmployee();
+      break;
+
+    case "Update an employee role":
       break;
 
     default:
@@ -100,7 +111,61 @@ const viewAllDepartments = () => {
     }
   });
 };
-const addToData = () => {};
+const addADepartment = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "department",
+        message: "What is the name of the new department?",
+      },
+    ])
+    .then((answer) => {
+      let departmentAdd = answer.department;
+      let department = "departments";
+      let nameVal = "name";
+      let values = [department, nameVal, departmentAdd];
+      addData(values);
+    });
+};
+
+const addEmployee = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "nameF",
+        message: "What is this employees first name?",
+      },
+      {
+        type: "input",
+        name: "nameL",
+        message: "what is this employees last name?",
+      },
+      {
+        type: "list",
+        name: "role",
+        choices: [],
+        message: "What department will this employee be joining?",
+      },
+    ])
+    .then((answer) => {});
+};
+
+const addData = (values) => {
+  if (values[0] == "departments") {
+    var addDataQuery = `INSERT INTO ?? (??) VALUES (?);`;
+  } else if (values[0] == "employees") {
+    addDataQuery = `INSERT INTO ?? (??,??,??,??) Values (?,?,?,?);`;
+  }
+  db.query(addDataQuery, values, (err, rows) => {
+    console.log("New update created at id: " + rows.insertId);
+    start();
+    if (err) {
+      console.log(err);
+    }
+  });
+};
 
 const updateData = () => {};
 
