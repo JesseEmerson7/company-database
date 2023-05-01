@@ -130,6 +130,27 @@ const addADepartment = () => {
 };
 
 const addEmployee = () => {
+  let updatedRoleArray = [];
+  let employeeArray = ["None"];
+  //query to give an updated list of roles for add employee questions
+  db.query(`SELECT title from roles`, (err, rows) => {
+    rows.forEach((title) => {
+      updatedRoleArray.push(title.title);
+      if (err) {
+        console.log(err);
+      }
+    });
+  });
+
+  //query to give updated list of employees for selecting a manager
+  db.query(`SELECT first_name from employees`, (err, rows) => {
+    rows.forEach((employee) => {
+      employeeArray.push(employee.first_name);
+      if (err) {
+        console.log(err);
+      }
+    });
+  });
   inquirer
     .prompt([
       {
@@ -145,11 +166,26 @@ const addEmployee = () => {
       {
         type: "list",
         name: "role",
-        choices: [],
+        choices: updatedRoleArray,
         message: "What department will this employee be joining?",
       },
+      {
+        type: "list",
+        name: "manager",
+        choices: employeeArray,
+        message: "Who will be this employees manager?",
+      },
     ])
-    .then((answer) => {});
+    .then(async (answers) => {
+      console.log(answers);
+      const answersObject = answers;
+      db.query(
+        `select id from roles
+      where title = ?;`,
+        answers.role
+      );
+      console.log(rows);
+    });
 };
 
 const addData = (values) => {
