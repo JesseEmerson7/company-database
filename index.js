@@ -55,6 +55,7 @@ const sorter = (request) => {
       break;
 
     case "Add a role":
+      addARole();
       break;
 
     case "Add an employee":
@@ -62,6 +63,7 @@ const sorter = (request) => {
       break;
 
     case "Update an employee role":
+      updateEmployeeRole();
       break;
 
     default:
@@ -129,6 +131,32 @@ const addADepartment = () => {
     });
 };
 
+const addARole = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "role",
+        message: "What is the name of the new role?",
+      },
+      {
+        type: "input",
+        name: "salary",
+        message:
+          "What is the salary of this role?(Include cents after a decimal)",
+      },
+      {
+        type: "input",
+        name: "department",
+        message: "What is this role's department id?",
+      },
+    ])
+    .then((answer) => {
+      const values = ["roles", answer.role, answer.salary, answer.department];
+      addData(values);
+    });
+};
+
 const addEmployee = () => {
   let updatedRoleArray = [];
   let employeeArray = ["None"];
@@ -176,24 +204,74 @@ const addEmployee = () => {
         message: "Who will be this employees manager?",
       },
     ])
-    .then(async (answers) => {
-      console.log(answers);
-      const answersObject = answers;
-      db.query(
-        `select id from roles
-      where title = ?;`,
-        answers.role
-      );
-      console.log(rows);
+    .then((answers) => {
+      sortEmployeeData(answers);
     });
+};
+
+const sortEmployeeData = async (answers) => {
+  const queryPromise = new Promise((resolve, reject) => {
+    db.query(
+      `select id from roles
+        where title = ?;`,
+      answers.role,
+      (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      }
+    );
+  });
+  const roleId = await queryPromise;
+  answers.role = roleId[0].id;
+  if (answers.manager !== "None") {
+    const queryPromiseTwo = new Promise((resolve, reject) => {
+      db.query(
+        `select id from employees
+        where first_name = ?;`,
+        answers.manager,
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        }
+      );
+    });
+    const managerId = await queryPromiseTwo;
+    answers.manager = managerId[0].id;
+  }
+
+  let sendNewEmployee = [];
+  if (answers.manager === "None") {
+    sendNewEmployee = ["employees", answers.nameF, answers.nameL, answers.role];
+  } else {
+    sendNewEmployee = [
+      "employees",
+      answers.nameF,
+      answers.nameL,
+      answers.role,
+      answers.manager,
+    ];
+  }
+  addData(sendNewEmployee);
 };
 
 const addData = (values) => {
   if (values[0] == "departments") {
     var addDataQuery = `INSERT INTO ?? (??) VALUES (?);`;
-  } else if (values[0] == "employees") {
-    addDataQuery = `INSERT INTO ?? (??,??,??,??) Values (?,?,?,?);`;
+  } else if (values[0] == "employees" && values.length == 5) {
+    addDataQuery = `INSERT INTO ?? (first_name,last_name,role_id,manager_id) Values (?,?,?,?);`;
+  } else if (values[0] == "employees" && values.length == 4) {
+    addDataQuery = `INSERT INTO ?? (first_name,last_name,role_id) Values (?,?,?);`;
+  } else if (values[0] == "roles") {
+    addDataQuery = `insert into ?? (title,salary,department_id)
+  values (?,?,?);`;
   }
+
   db.query(addDataQuery, values, (err, rows) => {
     console.log("New update created at id: " + rows.insertId);
     start();
@@ -203,6 +281,62 @@ const addData = (values) => {
   });
 };
 
-const updateData = () => {};
+const updateEmployeeRole = () => {
+  const updatedRoleArray = [];
+  const employeeArray = ["None"];
+  //query to give an updated list of roles for add employee questions
+  db.query(`SELECT title from roles`, (err, rows) => {
+    rows.forEach((title) => {
+      updatedRoleArray.push(title.title);
+      if (err) {
+        console.log(err);
+      }
+    });
+  });
+
+  //query to give updated list of employees for question list
+  db.query(`SELECT first_name from employees`, (err, rows) => {
+    rows.forEach((employee) => {
+      employeeArray.push(employee.first_name);
+      if (err) {
+        console.log(err);
+      }
+    });
+  });
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "emId",
+        message: "What is this employees id number?",
+      },
+      {
+        type: "input",
+        name: "role",
+        message: "New role id number?",
+      },
+    ])
+    .then((answers) => {
+      const values = [answers.role, answers.emId];
+
+      db.query(
+        `update employees 
+    set role_id = ?
+    where id = ?;`,
+        values,
+        (err, rows) => {
+          if (err) {
+            console.log(err);
+            start();
+          } else {
+            console.log("Role updated");
+            start();
+          }
+        }
+      );
+    });
+};
+
+console.log("WELCOME TO COMPANY MANAGER");
 
 start();
