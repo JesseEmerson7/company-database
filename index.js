@@ -1,7 +1,7 @@
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
-
+//connection to database through mysql2
 const db = mysql.createConnection(
   {
     host: "localhost",
@@ -11,7 +11,7 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the employee_tracker_db database.`)
 );
-
+//starting prompts for what to do
 const start = () => {
   inquirer
     .prompt([
@@ -31,10 +31,12 @@ const start = () => {
       },
     ])
     .then((answers) => {
+      //answers sent to a function to sort them out and start the correct code based on selection
+      //from inquirer
       sorter(answers.select);
     });
 };
-
+//sorts through the first answer with a switch
 const sorter = (request) => {
   switch (request) {
     case "View all departments":
@@ -70,7 +72,7 @@ const sorter = (request) => {
       break;
   }
 };
-
+//function to view all roles. sends a query to data base and uses cTable module to display it
 const viewAllRoles = () => {
   db.query(
     `select t.id, t.title, ti.name as department, t.salary
@@ -86,6 +88,9 @@ const viewAllRoles = () => {
     }
   );
 };
+
+//This function uses mysql query to gather data from 3 tables and joins them to create a complete
+//table of employee info
 const viewAllEmployees = () => {
   db.query(
     `select t.id, t.first_name, t.last_name,tii.title, ti.name as department, tii.salary,
@@ -104,6 +109,7 @@ const viewAllEmployees = () => {
   );
 };
 
+//selects all from departments table in db
 const viewAllDepartments = () => {
   db.query(`SELECT * from departments;`, (err, rows) => {
     console.log(cTable.getTable(rows));
@@ -113,6 +119,8 @@ const viewAllDepartments = () => {
     }
   });
 };
+
+//gets new department name from user and sends it to addData func to be added to the db by name
 const addADepartment = () => {
   inquirer
     .prompt([
@@ -130,7 +138,7 @@ const addADepartment = () => {
       addData(values);
     });
 };
-
+//adds a role based on teh role name, salary, and department id and sends that to addData func
 const addARole = () => {
   inquirer
     .prompt([
@@ -157,6 +165,7 @@ const addARole = () => {
     });
 };
 
+//function for adding employee data and sending it to sortEmployeeData func
 const addEmployee = () => {
   let updatedRoleArray = [];
   let employeeArray = ["None"];
@@ -208,7 +217,8 @@ const addEmployee = () => {
       sortEmployeeData(answers);
     });
 };
-
+//sorts the data from answers and gets id numbers for role title and manager id
+//then sends that to addData func
 const sortEmployeeData = async (answers) => {
   const queryPromise = new Promise((resolve, reject) => {
     db.query(
@@ -244,7 +254,7 @@ const sortEmployeeData = async (answers) => {
     const managerId = await queryPromiseTwo;
     answers.manager = managerId[0].id;
   }
-
+  //if the user selects none it sends a different array to the addData func
   let sendNewEmployee = [];
   if (answers.manager === "None") {
     sendNewEmployee = ["employees", answers.nameF, answers.nameL, answers.role];
@@ -260,6 +270,7 @@ const sortEmployeeData = async (answers) => {
   addData(sendNewEmployee);
 };
 
+//sorts possible values sent and applies the right query for each to add data
 const addData = (values) => {
   if (values[0] == "departments") {
     var addDataQuery = `INSERT INTO ?? (??) VALUES (?);`;
@@ -281,28 +292,8 @@ const addData = (values) => {
   });
 };
 
+//updates employee role by input of id and role id
 const updateEmployeeRole = () => {
-  const updatedRoleArray = [];
-  const employeeArray = ["None"];
-  //query to give an updated list of roles for add employee questions
-  db.query(`SELECT title from roles`, (err, rows) => {
-    rows.forEach((title) => {
-      updatedRoleArray.push(title.title);
-      if (err) {
-        console.log(err);
-      }
-    });
-  });
-
-  //query to give updated list of employees for question list
-  db.query(`SELECT first_name from employees`, (err, rows) => {
-    rows.forEach((employee) => {
-      employeeArray.push(employee.first_name);
-      if (err) {
-        console.log(err);
-      }
-    });
-  });
   inquirer
     .prompt([
       {
